@@ -245,15 +245,34 @@ Future<void> processBuildGradleFileKTS(String newPackageName) async {
   }
 
   /// Updates App Label
-  Future<void> updateAppName(String name) async {
+  Future<void> updateAppName(String newAndroidLabelName) async {
     final File androidManifestFile = File(FARConstants.androidManifest);
     final List<String> lines = await androidManifestFile.readAsLines();
     for (int x = 0; x < lines.length; x++) {
       String line = lines[x];
       if (line.contains('android:label')) {
+        // Get previous `android:label` so we can display it to user
+        var reg = RegExp(r'android:label="([^"]*(\\"[^"]*)*)"',
+            caseSensitive: true, multiLine: false);
+        var match = reg.firstMatch(line);
+        if (match == null) {
+          print('ERROR:: android:label= line incorrectly matched'
+              'Please file an issue on github with '
+              '${FARConstants.androidManifest} file attached.');
+          return;
+        }
+        var previousName = match.group(1);
+        final String? oldAndroidLabelName = previousName;
+
+        print('Previous `android:label` was "$oldAndroidLabelName"');
+        // END display previous `android:label` for user
+
         line = line.replaceAll(RegExp(r'android:label="[^"]*(\\"[^"]*)*"'),
-            'android:label="$name"');
+            'android:label="$newAndroidLabelName"');
         lines[x] = line;
+
+        print('NEW android:label line= "$line"');
+
         lines.add('');
       }
     }
